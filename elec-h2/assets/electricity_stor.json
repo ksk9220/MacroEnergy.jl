@@ -1,0 +1,146 @@
+{
+    "elec_stor": {
+        "global_data": {
+            "storage": {
+                "commodity": "Electricity"
+            },
+            "edges": {
+                "discharge_edge": {
+                    "unidirectional": true,
+                    "commodity": "Electricity"
+                },
+                "charge_edge": {
+                    "unidirectional": true,
+                    "commodity": "Electricity"
+                }
+            }
+        },
+        "instance_data": [
+            {
+                "id": "LiIon_elec",
+                "storage": {
+                    "min_storage_level": 0.05,
+                    "can_retire": true,
+                    "max_capacity": -1,
+                    "can_expand": true,
+                    "constraints": {
+                        "StorageCapacityConstraint": true,
+                        "StorageMaxDurationConstraint": true,
+                        "StorageSymmetricCapacityConstraint": true,
+                        "BalanceConstraint": true,
+                        "StorageMinDurationConstraint": true
+                    },
+                    "max_duration": 10,
+                    "min_capacity": 0,
+                    "fixed_om_cost": 6900,
+                    "long_duration": false,
+                    "max_storage_level": 0.95,
+                    "charge_discharge_ratio": 1,
+                    "investment_cost": 22322,
+                    "loss_fraction": 0.001,
+                    "capacity_size": 1,
+                    "min_duration": 1,
+                    "existing_capacity": 0
+                },
+                "edges": {
+                    "discharge_edge": {
+                        "can_retire": true,
+                        "max_capacity": -1,
+                        "can_expand": true,
+                        "constraints": {
+                            "StorageDischargeLimitConstraint": true,
+                            "CapacityConstraint": true
+                        },
+                        "min_capacity": 0,
+                        "fixed_om_cost": 6400,
+                        "end_vertex": "ele_bal",
+                        "investment_cost": 20711,
+                        "variable_om_cost": 1,
+                        "has_capacity": true,
+                        "efficiency": 0.92,
+                        "capacity_size": 1,
+                        "existing_capacity": 0
+                    },
+                    "charge_edge": {
+                        "can_retire": false,
+                        "max_capacity": 0,
+                        "can_expand": false,
+                        "constraints": {},
+                        "start_vertex": "ele_bal",
+                        "min_capacity": 0,
+                        "fixed_om_cost": 0,
+                        "investment_cost": 0,
+                        "variable_om_cost": 1,
+                        "has_capacity": false,
+                        "efficiency": 0.92,
+                        "capacity_size": 1,
+                        "existing_capacity": 0
+                    }
+                }
+            },
+            {
+                "id": "MetalAir_elec",
+                "storage": {
+                    "min_storage_level": 0.05,
+                    "can_retire": true,
+                    "max_capacity": -1,
+                    "can_expand": true,
+                    "constraints": {
+                        "StorageCapacityConstraint": true,
+                        "StorageMaxDurationConstraint": true,
+                        "StorageSymmetricCapacityConstraint": true,
+                        "BalanceConstraint": true,
+                        "StorageMinDurationConstraint": true
+                    },
+                    "max_duration": 150,
+                    "min_capacity": 0,
+                    "fixed_om_cost": 250,
+                    "long_duration": false,
+                    "max_storage_level": 0.95,
+                    "charge_discharge_ratio": 1,
+                    "investment_cost": 806,
+                    "loss_fraction": 0.01,
+                    "capacity_size": 1,
+                    "min_duration": 10,
+                    "existing_capacity": 0
+                },
+                "edges": {
+                    "discharge_edge": {
+                        "can_retire": true,
+                        "max_capacity": -1,
+                        "can_expand": true,
+                        "constraints": {
+                            "StorageDischargeLimitConstraint": true,
+                            "CapacityConstraint": true
+                        },
+                        "min_capacity": 0,
+                        "fixed_om_cost": 27200,
+                        "end_vertex": "ele_bal",
+                        "investment_cost": 88600,
+                        "variable_om_cost": 1,
+                        "has_capacity": true,
+                        "efficiency": 0.59,
+                        "capacity_size": 1,
+                        "existing_capacity": 0
+                    },
+                    "charge_edge": {
+                        "can_retire": false,
+                        "max_capacity": 0,
+                        "can_expand": false,
+                        "constraints": {},
+                        "start_vertex": "ele_bal",
+                        "min_capacity": 0,
+                        "fixed_om_cost": 0,
+                        "investment_cost": 0,
+                        "variable_om_cost": 1,
+                        "has_capacity": false,
+                        "efficiency": 0.75,
+                        "capacity_size": 1,
+                        "existing_capacity": 0
+                    }
+                }
+            }
+        ],
+        "type": "Battery"
+    }
+}

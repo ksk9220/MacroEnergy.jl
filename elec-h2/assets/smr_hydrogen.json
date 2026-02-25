@@ -1,0 +1,46 @@
+{
+    "ThermalHydrogen": {
+        "global_data": {
+            "transforms": {
+                "constraints": {
+                    "BalanceConstraint": true
+                }
+            }
+        },
+        "instance_data": [
+            {
+                "transforms": {
+                    "timedata": "NaturalGas",
+                    "fuel_consumption": 1.4,
+                    "electricity_consumption": 0.02,
+                    "emission_rate": 0.15
+                },
+                "id": "smr_h2",
+                "edges": {
+                    "co2_edge": {
+                        "end_vertex": "co2_sink",
+                        "commodity": "CO2"
+                    },
+                    "fuel_edge": {
+                        "start_vertex": "ng_source",
+                        "commodity": "NaturalGas"
+                    },
+                    "elec_edge": {
+                        "start_vertex": "ele_bal",
+                        "commodity": "Electricity"
+                    },
+                    "h2_edge": {
+                        "end_vertex": "h2_bal",
+                        "max_capacity": -1,
+                        "min_flow_fraction": 0,
+                        "min_capacity": 0,
+                        "commodity": "Hydrogen",
+                        "investment_cost": 95000,
+                        "fixed_om_cost": 22500
+                }
+            }
+        }
+        ],
+        "type": "ThermalHydrogen"
+    }
+}

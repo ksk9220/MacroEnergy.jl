@@ -1,0 +1,73 @@
+{
+    "VRE": {
+        "global_data": {
+            "transforms": {
+                "timedata": "Electricity"
+            },
+            "edges": {
+                "edge": {
+                    "unidirectional": true,
+                    "has_capacity": true,
+                    "commodity": "Electricity"
+                }
+            }
+        },
+        "instance_data": [
+            {
+                "id": "SolarPV_elec",
+                "edges": {
+                    "edge": {
+                        "can_retire": true,
+                        "max_capacity": -1,
+                        "can_expand": true,
+                        "constraints": {
+                            "CapacityConstraint": true
+                        },
+                        "min_capacity": 0,
+                        "commodity": "Electricity",
+                        "fixed_om_cost": 15000,
+                        "end_vertex": "ele_bal",
+                        "investment_cost": 72125,
+                        "variable_om_cost": 0,
+                        "capacity_size": 1,
+                        "availability": {
+                            "timeseries": {
+                                "path": "system/availability.csv",
+                                "header": "solar"
+                            }
+                        },
+                        "existing_capacity": 0
+                    }
+                }
+            },
+            {
+                "id": "wind_elec",
+                "edges": {
+                    "edge": {
+                        "can_retire": true,
+                        "max_capacity": -1,
+                        "can_expand": true,
+                        "constraints": {
+                            "CapacityConstraint": true
+                        },
+                        "min_capacity": 0,
+                        "commodity": "Electricity",
+                        "fixed_om_cost": 28000,
+                        "end_vertex": "ele_bal",
+                        "investment_cost": 107583,
+                        "variable_om_cost": 0,
+                        "capacity_size": 1,
+                        "availability": {
+                            "timeseries": {
+                                "path": "system/availability.csv",
+                                "header": "onwind"
+                            }
+                        },
+                        "existing_capacity": 0
+                    }
+                }
+            }
+        ],
+        "type": "VRE"
+    }
+}

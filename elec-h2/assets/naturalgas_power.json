@@ -1,0 +1,77 @@
+{
+    "ThermalPower": {
+        "global_data": {
+            "transforms": {
+                "constraints": {
+                    "BalanceConstraint": true
+                }
+            },
+            "edges": {
+                "co2_edge": {
+                    "unidirectional": true,
+                    "has_capacity": false
+                },
+                "elec_edge": {
+                    "unidirectional": true,
+                    "has_capacity": true
+                },
+                "fuel_edge": {
+                    "unidirectional": true,
+                    "has_capacity": false
+                }
+            }
+        },
+        "instance_data": [
+            {
+                "transforms": {
+                    "timedata": "NaturalGas",
+                    "fuel_consumption": 6.16,
+                    "emission_rate": 0.053
+                },
+                "id": "ng_ccgt_01",
+                "edges": {
+                    "co2_edge": {
+                        "end_vertex": "co2_sink",
+                        "commodity": "CO2"
+                    },
+                    "elec_edge": {
+                        "end_vertex": "ele_bal",
+                        "can_retire": true,
+                        "min_up_time": 0,
+                        "max_capacity": -1,
+                        "can_expand": true,
+                        "min_flow_fraction": 0,
+                        "constraints": {
+                            "MinFlowConstraint": false,
+                            "RampingLimitConstraint": false,
+                            "CapacityConstraint": true,
+                            "MinDownTimeConstraint": false,
+                            "MinUpTimeConstraint": false
+                        },
+                        "min_capacity": 0,
+                        "commodity": "Electricity",
+                        "fixed_om_cost": 30000,
+                        "uc": true,
+                        "ramp_up_fraction": 1,
+                        "startup_cost": 0,
+                        "investment_cost": 108228,
+                        "variable_om_cost": 2,
+                        "startup_fuel_consumption": 0,
+                        "min_down_time": 0,
+                        "capacity_size": 250,
+                        "availability": [
+                            1
+                        ],
+                        "existing_capacity": 0,
+                        "ramp_down_fraction": 1
+                    },
+                    "fuel_edge": {
+                        "start_vertex": "ng_source",
+                        "commodity": "NaturalGas"
+                    }
+                }
+            }
+        ],
+        "type": "ThermalPower"
+    }
+}
