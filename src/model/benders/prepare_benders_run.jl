@@ -47,7 +47,7 @@ function get_period_to_subproblem_mapping(periods::Vector{System})
             end
         end
     end
-    return period_to_subproblem_map, collect(1:subperiod_count)
+    return period_to_subproblem_map, subperiod_count
     
 end
 
@@ -97,7 +97,6 @@ function create_worker_process(pid,project,case_path::AbstractString)
 
     Distributed.remotecall_eval(Main, pid, :(using MacroEnergySolvers))
 
-    additions_path = user_additions_module_path(case_path)
-    Distributed.remotecall_eval(MacroEnergy, pid, :(MacroEnergy.load_user_additions($additions_path)))
+    Distributed.remotecall_eval(MacroEnergy, pid, :(MacroEnergy.load_user_additions($case_path)))
 
 end

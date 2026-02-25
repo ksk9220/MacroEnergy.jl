@@ -84,9 +84,7 @@ function generate_planning_problem(case::Case)
 
     discount_rate = settings.DiscountRate
 
-    cum_years = [sum(period_lengths[i] for i in 1:s-1; init=0) for s in 1:number_of_periods];
-
-    discount_factor = 1 ./ ( (1 + discount_rate) .^ cum_years)
+    discount_factor = present_value_factor(discount_rate, period_lengths)
 
     @expression(model, eFixedCostByPeriod[s in 1:number_of_periods], discount_factor[s] * fixed_cost[s])
     @expression(model, eFixedCost, sum(eFixedCostByPeriod[s] for s in 1:number_of_periods))
@@ -95,16 +93,11 @@ function generate_planning_problem(case::Case)
 
     @expression(model, eOMFixedCostByPeriod[s in 1:number_of_periods], discount_factor[s] * om_fixed_cost[s])
 
-    period_to_subproblem_map, subproblem_indices = get_period_to_subproblem_mapping(periods);
+    _, number_of_subperiods = get_period_to_subproblem_mapping(periods);
 
-    @variable(model, vTHETA[w in subproblem_indices] .>= 0)
+    @expression(model, eLowerBoundOperatingCost[w in 1:number_of_subperiods], AffExpr(0.0))
 
-    opexmult = [sum([1 / (1 + discount_rate)^(i) for i in 1:period_lengths[s]]) for s in 1:number_of_periods]
-
-    @expression(model, eVariableCostByPeriod[s in 1:number_of_periods], discount_factor[s] * opexmult[s] * sum(vTHETA[w] for w in period_to_subproblem_map[s]))
-    @expression(model, eApproximateVariableCost, sum(eVariableCostByPeriod[s] for s in 1:number_of_periods))
-
-    @objective(model, Min, model[:eFixedCost] + model[:eApproximateVariableCost])
+    @objective(model, Min, model[:eFixedCost])
 
     @info(" -- Planning problem generation complete, it took $(time() - start_time) seconds")
 
