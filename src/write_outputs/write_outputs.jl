@@ -61,6 +61,7 @@ function write_outputs(case_path::AbstractString, case::Case, bd_results::Bender
     flow_df = flows(subproblems_data)
     nsd_df = non_served_demand(subproblems_data)
     storage_level_df = storage_levels(subproblems_data)
+    curtailment_df = curtailment(subproblems_data)
     operational_costs_df = operational_costs(subproblems_data)
     
     # get the policy slack variables from the operational subproblems
@@ -92,6 +93,9 @@ function write_outputs(case_path::AbstractString, case::Case, bd_results::Bender
         # Storage level results
         write_storage_level(joinpath(results_dir, "storage_level.csv"), period, storage_level_df[subop_indices_period])
         
+        # Curtailment results
+        write_curtailment(joinpath(results_dir, "curtailment.csv"), period, curtailment_df[subop_indices_period])
+        
         # Cost results (system level)
         costs = prepare_costs_benders(period, bd_results, subop_indices_period, settings)
 
@@ -120,7 +124,7 @@ function write_outputs(case_path::AbstractString, case::Case, bd_results::Bender
             
             # Scaling factor to account for discounting in multi-period models
             discount_scaling = compute_variable_cost_discount_scaling(period_idx, settings)
-            write_duals_benders(results_dir, period, discount_scaling)
+            write_duals(results_dir, period, discount_scaling)
         end
     end
     	
@@ -162,6 +166,8 @@ function write_period_outputs(
     write_non_served_demand(joinpath(results_dir, "non_served_demand.csv"), system)
     # Storage level results
     write_storage_level(joinpath(results_dir, "storage_level.csv"), system)
+    # Curtailment results
+    write_curtailment(joinpath(results_dir, "curtailment.csv"), system)
 
     # Write dual values (if enabled)
     if system.settings.DualExportsEnabled

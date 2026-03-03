@@ -31,9 +31,9 @@ function generate_operation_subproblem(system::System,case_settings::NamedTuple,
 
     discount_factor = present_value_factor(discount_rate, period_lengths)
     
-    opexmult = present_value_annuity_factor(discount_rate, period_lengths[period_index])
+    opexmult = present_value_annuity_factor.(discount_rate, period_lengths)
 
-    @objective(model, Min, discount_factor * opexmult * model[:eVariableCost])
+    @objective(model, Min, discount_factor[period_index] * opexmult[period_index] * model[:eVariableCost])
 
     return model, linking_variables
 
@@ -272,4 +272,14 @@ function get_all_policy_constraints(system::System)
         end
     end 
     return policy_constraints
+end
+
+function update_with_subproblem_solutions!(subproblems::Union{Vector{Dict{Any, Any}},DistributedArrays.DArray}, results::NamedTuple)
+
+    subop_sol = MacroEnergySolvers.solve_subproblems(subproblems, results.planning_sol, true)
+
+    results = (; results..., subop_sol = subop_sol)
+
+    return nothing
+    
 end

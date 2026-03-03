@@ -19,6 +19,11 @@ MacroEnergy.get_detailed_costs
 MacroEnergy.get_detailed_costs_benders
 ```
 
+## `get_optimal_curtailment`
+```@docs
+MacroEnergy.get_optimal_curtailment
+```
+
 ## `get_optimal_discounted_costs`
 ```@docs
 MacroEnergy.get_optimal_discounted_costs
@@ -76,6 +81,11 @@ MacroEnergy.write_co2_cap_duals
 MacroEnergy.write_costs
 ```
 
+## `write_curtailment`
+```@docs
+MacroEnergy.write_curtailment
+```
+
 ## `write_detailed_costs`
 ```@docs
 MacroEnergy.write_detailed_costs
@@ -94,11 +104,6 @@ MacroEnergy.write_cost_breakdown_files!
 ## `write_duals`
 ```@docs
 MacroEnergy.write_duals
-```
-
-## `write_duals_benders`
-```@docs
-MacroEnergy.write_duals_benders
 ```
 
 ## `write_flow`
