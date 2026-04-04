@@ -5,6 +5,7 @@ using Random
 using MacroEnergy
 using CSV
 using DataFrames
+using OrderedCollections: OrderedDict
 import MacroEnergy:
     TimeData,
     compute_annualized_costs!,
@@ -21,6 +22,7 @@ import MacroEnergy:
     time_interval,
     start_vertex,
     price,
+    price_supply,
     total_years,
     present_value_factor,
     present_value_annuity_factor,
@@ -31,6 +33,8 @@ import MacroEnergy:
     new_capacity,
     storage_level,
     non_served_demand,
+    supply_flow,
+    supply_segments,
     segments_non_served_demand,
     price_non_served_demand,
     max_non_served_demand,
@@ -63,9 +67,10 @@ import MacroEnergy:
     Node,
     Storage,
     Transformation,
-    Edge,
+    UnidirectionalEdge,
     filter_edges_by_commodity!,
     write_curtailment,
+    write_time_weights,
     VRE
 
 
@@ -82,9 +87,12 @@ function test_writing_output()
             subperiod_weights=Dict(1 => 0.3, 2 => 0.5, 3 => 0.2)
         ),
         price = [10.0, 11.0, 12.0],
-        price_supply = [100.0, 110.0, 120.0],
-        max_supply = [100.0, 110.0, 120.0],
-        supply_flow = zeros(3, 3),  # 3 segments × 3 time steps
+        supply = OrderedDict(
+            :seg1 => MacroEnergy.SupplySegment(price = [10.0, 11.0, 12.0], min = [0.0], max = [100.0]),
+            :seg2 => MacroEnergy.SupplySegment(price = [110.0], min = [0.0], max = [110.0]),
+            :seg3 => MacroEnergy.SupplySegment(price = [120.0], min = [0.0], max = [120.0]),
+        ),
+        supply_flow = [12.0 15.0 18.0; 0.0 0.0 0.0; 0.0 0.0 0.0],
         non_served_demand = [1.0 2.0 3.0; 4.0 5.0 6.0; 7.0 8.0 9.0],
         max_nsd=[10.0, 11.0, 12.0],
         price_nsd = [100.0, 110.0, 120.0],
@@ -125,7 +133,7 @@ function test_writing_output()
         )
     )
 
-    edge_between_nodes = Edge{Electricity}(;
+    edge_between_nodes = UnidirectionalEdge{Electricity}(;
         id=:edge1,
         start_vertex=node1,
         end_vertex=node2,
@@ -140,7 +148,7 @@ function test_writing_output()
         flow=[1.0, 2.0, 3.0]
     )
 
-    edge_to_storage = Edge{Electricity}(;
+    edge_to_storage = UnidirectionalEdge{Electricity}(;
         id=:edge2,
         start_vertex=node1,
         end_vertex=storage,
@@ -155,7 +163,7 @@ function test_writing_output()
         flow=[4.0, 5.0, 6.0]
     )
 
-    edge_to_transformation = Edge{Electricity}(;
+    edge_to_transformation = UnidirectionalEdge{Electricity}(;
         id=:edge3,
         start_vertex=node1,
         end_vertex=transformation,
@@ -171,7 +179,7 @@ function test_writing_output()
         flow=[7.0, 8.0, 9.0]
     )
 
-    edge_from_storage = Edge{Electricity}(;
+    edge_from_storage = UnidirectionalEdge{Electricity}(;
         id=:edge4,
         start_vertex=storage,
         end_vertex=node2,
@@ -186,7 +194,7 @@ function test_writing_output()
         flow=[10.0, 11.0, 12.0]
     )
 
-    edge_from_transformation = Edge{Electricity}(;
+    edge_from_transformation = UnidirectionalEdge{Electricity}(;
         id=:edge5,
         start_vertex=transformation,
         end_vertex=node2,
@@ -201,7 +209,7 @@ function test_writing_output()
         flow=[13.0, 14.0, 15.0]
     )
 
-    edge_storage_transformation = Edge{Electricity}(;
+    edge_storage_transformation = UnidirectionalEdge{Electricity}(;
         id=:edge6,
         start_vertex=storage,
         end_vertex=transformation,
@@ -216,7 +224,7 @@ function test_writing_output()
         flow=[16.0, 17.0, 18.0]
     )
 
-    edge_from_transformation1 = Edge{NaturalGas}(;
+    edge_from_transformation1 = UnidirectionalEdge{NaturalGas}(;
         id=:edge3ng,
         start_vertex=transformation,
         end_vertex=node1,
@@ -231,7 +239,7 @@ function test_writing_output()
         flow=[7.0, 8.0, 9.0]
     )
 
-    edge_from_transformation2 = Edge{CO2}(;
+    edge_from_transformation2 = UnidirectionalEdge{CO2}(;
         id=:edge3co2,
         start_vertex=transformation,
         end_vertex=node1,
@@ -371,7 +379,7 @@ function test_writing_output()
         @test result[1, :resource_id] == :asset1
         @test result[1, :component_id] == :edge1
         @test result[1, :resource_type] == "ThermalPower{NaturalGas}"
-        @test result[1, :component_type] == "Edge{Electricity}"
+        @test result[1, :component_type] == "UnidirectionalEdge{Electricity}"
         @test result[1, :variable] == :capacity
         @test result[1, :year] === missing
         @test result[1, :value] == 200.0
@@ -396,7 +404,7 @@ function test_writing_output()
         @test result[1, :resource_id] == :asset1
         @test result[1, :component_id] == :edge1
         @test result[1, :resource_type] == "ThermalPower{NaturalGas}"
-        @test result[1, :component_type] == "Edge{Electricity}"
+        @test result[1, :component_type] == "UnidirectionalEdge{Electricity}"
         @test result[1, :variable] == :flow
         @test result[1, :year] === missing
         @test result[1, :time] === 1
@@ -628,7 +636,7 @@ function test_writing_output()
             id=:vre_transform,
             timedata=vre_timedata
         )
-        vre_edge = Edge{Electricity}(;
+        vre_edge = UnidirectionalEdge{Electricity}(;
             id=:vre_edge,
             start_vertex=vre_transform,
             end_vertex=node1,
@@ -682,8 +690,11 @@ function test_writing_output()
         @test result_empty isa DataFrame
         @test isempty(result_empty)
 
+        # Test write_curtailment (use shared temp dir, clean up at end)
+        curtailment_test_dir = abspath(mktempdir("."))
+
         # Test write_curtailment
-        test_curtailment_path = joinpath(abspath(mktempdir(".")), "curtailment.csv")
+        test_curtailment_path = joinpath(curtailment_test_dir, "curtailment.csv")
         @test_nowarn write_curtailment(test_curtailment_path, system_with_vre)
         @test isfile(test_curtailment_path)
         written = CSV.read(test_curtailment_path, DataFrame)
@@ -692,25 +703,79 @@ function test_writing_output()
         @test written[2, :value] ≈ 58.0
         @test written[3, :value] ≈ 67.0
         @test "value" in names(written)
-        rm(test_curtailment_path) # clean up
 
         # Test write_curtailment with wide layout
         system_with_vre.settings = (OutputLayout="wide",)
-        test_curtailment_path = joinpath(abspath(mktempdir(".")), "curtailment_wide.csv")
-        @test_nowarn write_curtailment(test_curtailment_path, system_with_vre)
-        @test isfile(test_curtailment_path)
-        written = CSV.read(test_curtailment_path, DataFrame)
+        test_curtailment_wide_path = joinpath(curtailment_test_dir, "curtailment_wide.csv")
+        @test_nowarn write_curtailment(test_curtailment_wide_path, system_with_vre)
+        @test isfile(test_curtailment_wide_path)
+        written = CSV.read(test_curtailment_wide_path, DataFrame)
         @test size(written, 1) == 3
         @test written[1, :vre_asset] ≈ 49.0
         @test written[2, :vre_asset] ≈ 58.0
         @test written[3, :vre_asset] ≈ 67.0
 
         # Test write_curtailment with system without VRE (no file written, no error)
-        test_empty_path = joinpath(abspath(mktempdir(".")), "curtailment_empty.csv")
-        @test_nowarn write_curtailment(test_empty_path, system)
-        # When empty, write_curtailment returns early and may not create file
-        # (get_optimal_curtailment returns empty, so no write occurs)
+        test_empty_path = joinpath(curtailment_test_dir, "curtailment_empty.csv")
         @test !isfile(test_empty_path)
+        @test_nowarn write_curtailment(test_empty_path, system)
+        @test !isfile(test_empty_path)
+
+        rm(curtailment_test_dir, recursive=true)
+    end
+
+    @testset "write_time_weights" begin
+        # Create minimal system with time_data for TDR (3 representative sub-periods)
+        test_dir = abspath(mktempdir("."))
+        sys_tdr = empty_system(test_dir)
+        timedata_tdr = TimeData{Electricity}(;
+            time_interval=1:9,
+            hours_per_timestep=1,
+            subperiods=[1:3, 4:6, 7:9],
+            subperiod_indices=[1, 2, 3],
+            subperiod_weights=Dict(1 => 100.0, 2 => 200.0, 3 => 300.0),
+            subperiod_map=Dict(1 => 1, 2 => 2, 3 => 3),
+        )
+        sys_tdr.time_data = Dict(:Electricity => timedata_tdr)
+
+        # Test TDR case: write and verify output
+        time_weights_path = joinpath(test_dir, "time_weights.csv")
+        write_time_weights(time_weights_path, sys_tdr)
+        @test isfile(time_weights_path)
+
+        written = CSV.read(time_weights_path, DataFrame)
+        @test Set(names(written)) == Set(["time", "subperiod_index", "weight"])
+        @test size(written, 1) == 9
+
+        # Timesteps 1–3 in subperiod 1 (weight 100), 4–6 in subperiod 2 (weight 200), 7–9 in subperiod 3 (weight 300)
+        @test written[1:3, :subperiod_index] == [1, 1, 1]
+        @test written[1:3, :weight] == [100.0, 100.0, 100.0]
+        @test written[4:6, :subperiod_index] == [2, 2, 2]
+        @test written[4:6, :weight] == [200.0, 200.0, 200.0]
+        @test written[7:9, :subperiod_index] == [3, 3, 3]
+        @test written[7:9, :weight] == [300.0, 300.0, 300.0]
+        @test written[!, :time] == collect(1:9)
+
+        # Test without TDR (single representative sub-period)
+        sys_single = empty_system(test_dir)
+        timedata_single = TimeData{Electricity}(;
+            time_interval=1:5,
+            hours_per_timestep=1,
+            subperiods=[1:5],
+            subperiod_indices=[1],
+            subperiod_weights=Dict(1 => 1.0),
+            subperiod_map=Dict(1 => 1),
+        )
+        sys_single.time_data = Dict(:Electricity => timedata_single)
+
+        time_weights_single_path = joinpath(test_dir, "time_weights_single.csv")
+        write_time_weights(time_weights_single_path, sys_single)
+        written_single = CSV.read(time_weights_single_path, DataFrame)
+        @test size(written_single, 1) == 5
+        @test all(written_single.subperiod_index .== 1)
+        @test all(written_single.weight .== 1.0)
+
+        rm(test_dir, recursive=true)
     end
 
     # Test get_macro_objs functions
@@ -975,7 +1040,13 @@ function test_writing_output()
             subperiod_weight(edge_to_storage, current_subperiod(edge_to_storage, t)) * price(start_vertex(edge_to_storage), t) * value(flow(edge_to_storage, t))
             for t in time_interval(edge_to_storage)
         )
+        # Note: edge_between_nodes (edge1) is not part of any system asset and is not
+        # returned by get_edges(system), so it does not contribute to attributed fuel costs.
         fuel_raw_total = fuel_raw_transformation + fuel_raw_storage
+        supply_raw_total = sum(
+            subperiod_weight(node1, current_subperiod(node1, t)) * price_supply(node1, s, t) * value(supply_flow(node1, s, t))
+            for s in supply_segments(node1), t in time_interval(node1)
+        )
         # NonServedDemand from node1: sum over segment and time of (weight * price_nsd * nsd)
         nsd_raw_total = sum(
             subperiod_weight(node1, current_subperiod(node1, t)) * price_non_served_demand(node1, s) * value(non_served_demand(node1, s, t))
@@ -1004,8 +1075,8 @@ function test_writing_output()
         @test detailed_undisc.value[detailed_undisc.category .== :Investment] ≈ [inv_cf * new_cap_val]
         # VariableOM: raw * period_length
         @test detailed_undisc.value[detailed_undisc.category .== :VariableOM] ≈ [variable_om_raw * period_length]
-        # Fuel: raw * period_length (sum of all edges with fuel cost)
         @test sum(detailed_undisc.value[detailed_undisc.category .== :Fuel]) ≈ fuel_raw_total * period_length
+        @test sum(detailed_undisc.value[detailed_undisc.category .== :Supply]) ≈ (supply_raw_total - fuel_raw_total) * period_length
         # NonServedDemand: raw * period_length (from nodes with non_served_demand)
         @test sum(detailed_undisc.value[detailed_undisc.category .== :NonServedDemand]) ≈ nsd_raw_total * period_length
 
@@ -1021,8 +1092,8 @@ function test_writing_output()
         @test detailed_disc.value[detailed_disc.category .== :Investment] ≈ [inv_pv]
         # VariableOM: raw * discount_factor * opexmult
         @test detailed_disc.value[detailed_disc.category .== :VariableOM] ≈ [variable_om_raw * discount_factor * opexmult]
-        # Fuel: raw * discount_factor * opexmult (sum of all edges with fuel cost)
         @test sum(detailed_disc.value[detailed_disc.category .== :Fuel]) ≈ fuel_raw_total * discount_factor * opexmult
+        @test sum(detailed_disc.value[detailed_disc.category .== :Supply]) ≈ (supply_raw_total - fuel_raw_total) * discount_factor * opexmult
         # NonServedDemand: raw * discount_factor * opexmult
         @test sum(detailed_disc.value[detailed_disc.category .== :NonServedDemand]) ≈ nsd_raw_total * discount_factor * opexmult
 

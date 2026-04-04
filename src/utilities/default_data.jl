@@ -110,14 +110,15 @@ function node_default_data()
         :id => missing,
         :timedata => missing,
         :location => missing,
-        :constraints => Dict{Symbol,Bool}(),
+        :constraints => Dict{Symbol,Bool}(
+            :BalanceConstraint => true,
+        ),
         :demand => Float64[],
         :max_nsd => [0.0],
         :min_nsd => [0.0],
         :price => Float64[],
         :price_nsd => [0.0],
-        :price_supply => [0.0],
-        :max_supply => [0.0],
+        :supply => OrderedDict{Symbol,SupplySegment}(),
         :price_unmet_policy => Dict{Symbol,Any}(),
         :rhs_policy => Dict{Symbol,Any}(),
     )

@@ -9,7 +9,8 @@ using CSV, DataFrames, JSON3
 import MacroEnergy:
     System,
     AbstractEdge,
-    Edge,
+    UnidirectionalEdge,
+    BidirectionalEdge,
     EdgeWithUC,
     Node,
     Location,
@@ -25,6 +26,7 @@ import MacroEnergy:
     read_file,
     generate_model,
     create_optimizer,
+    postprocess!,
     set_optimizer,
     optimize!,
     objective_value,
@@ -46,7 +48,8 @@ import MacroEnergy:
     get_detailed_costs,
     write_flow,
     write_curtailment,
-    typesymbol
+    typesymbol,
+    unidirectional
 
 
 include("utilities.jl")
@@ -69,7 +72,7 @@ function test_load_commodities(
     @test length(commodities) == length(commodities_true)
     for (k, v) in commodities
         @test k in commodities_true
-        @test Symbol(v) in commodities_true
+        @test typesymbol(v) in commodities_true
     end
     return nothing
 end
@@ -121,14 +124,17 @@ function test_load(
     obj_in::Vector{AbstractTypeConstraint},
     data_true::T,
 ) where {T<:JSON3.Object}
-    @test length(obj_in) == length(data_true)
+    active_constraints = Dict(
+        k => v for (k, v) in data_true if v
+    )
+    @test length(obj_in) == length(active_constraints)
     for c in obj_in
         name = Symbol(typeof(c))
-        if !(name in propertynames(data_true))
+        if !(name in keys(active_constraints))
             println("Constraint $name not found in JSON file")
         end
-        @test name in propertynames(data_true)
-        @test data_true[name]   # check that the constraint is set to true in the JSON file
+        @test name in keys(active_constraints)
+        @test active_constraints[name]   # check that the constraint is set to true in the JSON file
     end
     return nothing
 end
@@ -137,7 +143,7 @@ function test_load(e_in::AbstractEdge{T}, e_true::S) where {T<:Commodity,S<:JSON
     @test e_in.start_vertex.id == Symbol(e_true.start_vertex)
     @test e_in.end_vertex.id == Symbol(e_true.end_vertex)
     @test typesymbol(commodity_type(e_in.timedata)) == Symbol(e_true.timedata)
-    @test e_in.unidirectional == get(e_true, :unidirectional, true)
+    @test unidirectional(e_in) == get(e_true, :unidirectional, true)
     @test e_in.has_capacity == get(e_true, :has_capacity, false)
     @test e_in.can_retire == get(e_true, :can_retire, false)
     @test e_in.can_expand == get(e_true, :can_expand, false)
@@ -242,7 +248,7 @@ function test_load(a_in::AbstractAsset, a_true::T) where {T<:JSON3.Object}
         data_in = getfield(a_in, t)
         if isa(data_in, AssetId)
             test_load(data_in, a_true_instance_data.id)
-        elseif isa(data_in, Edge) || isa(data_in, EdgeWithUC)
+        elseif isa(data_in, UnidirectionalEdge) || isa(data_in, BidirectionalEdge) || isa(data_in, EdgeWithUC)
             test_load(data_in, a_true_instance_data.edges[t])
         elseif isa(data_in, Storage)
             test_load(data_in, a_true_instance_data.storage)
@@ -273,6 +279,7 @@ function test_model_generation_and_optimization()
     optimizer = create_optimizer(optim)
     model = generate_model(case,optimizer)
     optimize!(model)
+    postprocess!(case, model)
     macro_objval = objective_value(model)
 
     @test macro_objval ≈ obj_true
@@ -285,15 +292,17 @@ end
 function test_writing_outputs(case,model)
     system = case.systems[1];
     settings = case.settings;
+    @test !isempty(system.assets)
+    first_asset = first(system.assets)
     @test_nowarn get_optimal_capacity(system)
     @test_nowarn get_optimal_new_capacity(system)
     @test_nowarn get_optimal_retired_capacity(system)
-    @test_nowarn get_optimal_capacity(system.assets[1], scaling=1.0)
-    @test_nowarn get_optimal_new_capacity(system.assets[1])
-    @test_nowarn get_optimal_retired_capacity(system.assets[1])
+    @test_nowarn get_optimal_capacity(first_asset, scaling=1.0)
+    @test_nowarn get_optimal_new_capacity(first_asset)
+    @test_nowarn get_optimal_retired_capacity(first_asset)
     @test_nowarn get_optimal_flow(system)
-    @test_nowarn get_optimal_flow(system.assets[1], scaling=1.0)
-    @test_nowarn get_optimal_flow(system.assets[1].elec_edge, 1.0)
+    @test_nowarn get_optimal_flow(first_asset, scaling=1.0)
+    @test_nowarn get_optimal_flow(first_asset.elec_edge, 1.0)
     @test_nowarn create_discounted_cost_expressions!(model,system,settings)
     @test_nowarn compute_undiscounted_costs!(model, system, settings)
     @test_nowarn get_optimal_discounted_costs(model)
