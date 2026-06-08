@@ -18,9 +18,13 @@ function scaling!(system::System)
 
     @info("Scaling system data to GWh | ktons | M\$")
 
-    scaling!.(system.locations)
+    for location in system.locations
+        scaling!(location)
+    end
 
-    scaling!.(system.assets)
+    for asset in system.assets
+        scaling!(asset)
+    end
 
     return nothing
 end
@@ -46,9 +50,17 @@ function attributes_to_scale(t::Transformation)
 end
 
 
-function /(d::Dict, factor::Float64)
+function /(d::AbstractDict, factor::Float64)
     for (k, v) in d
-        d[k] = v / factor
+        if isa(v, Number)
+            d[k] = v / factor
+        elseif isa(v, AbstractVector)
+            d[k] = Float64.(v) ./ factor
+        elseif isa(v, AbstractDict)
+            d[k] = v / factor
+        else
+            throw(ArgumentError("Cannot scale dictionary value of type $(typeof(v))"))
+        end
     end
     return d
 end

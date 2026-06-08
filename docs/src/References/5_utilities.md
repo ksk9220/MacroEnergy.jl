@@ -29,6 +29,11 @@ MacroEnergy.balance_ids
 MacroEnergy.balance_data
 ```
 
+## `build_period_planning!`
+```@docs
+MacroEnergy.build_period_planning!
+```
+
 ## `create_output_path`
 ```@docs
 MacroEnergy.create_output_path
@@ -37,6 +42,11 @@ MacroEnergy.create_output_path
 ## `ensure_duals_available!`
 ```@docs
 MacroEnergy.ensure_duals_available!
+```
+
+## `_extract_balance_duals`
+```@docs
+MacroEnergy._extract_balance_duals
 ```
 
 ## `get_asset_by_id`
@@ -119,6 +129,12 @@ MacroEnergy.find_available_path
 MacroEnergy.find_node
 ```
 
+## `has_tdr`
+
+```@docs
+MacroEnergy.has_tdr
+```
+
 ## `id`
 ```@docs
 MacroEnergy.id
@@ -137,6 +153,16 @@ MacroEnergy.location_ids
 ## `print_struct_info`
 ```@docs
 MacroEnergy.print_struct_info
+```
+
+## `reconstruct_benders_variable`
+```@docs
+MacroEnergy.reconstruct_benders_variable
+```
+
+## `reconstruct_timeseries`
+```@docs
+MacroEnergy.reconstruct_timeseries
 ```
 
 ## `reshape_wide`
@@ -169,6 +195,11 @@ MacroEnergy.set_value
 MacroEnergy.set_constraint_dual!
 ```
 
+## `store_and_unregister_costs!`
+```@docs
+MacroEnergy.store_and_unregister_costs!
+```
+
 ## `struct_info`
 ```@docs
 MacroEnergy.struct_info
@@ -179,42 +210,32 @@ MacroEnergy.struct_info
 MacroEnergy.timestepbefore
 ```
 
-## `collect_flow_results`
-```@docs
-MacroEnergy.collect_flow_results
-```
-
-## `collect_non_served_demand_results`
-```@docs
-MacroEnergy.collect_non_served_demand_results
-```
-
-## `collect_storage_level_results`
-```@docs
-MacroEnergy.collect_storage_level_results
-```
-
-## `collect_subproblem_results`
-```@docs
-MacroEnergy.collect_subproblem_results
-```
-
-## `collect_local_results`
-```@docs
-MacroEnergy.collect_local_results
-```
-
-## `collect_distributed_results`
-```@docs
-MacroEnergy.collect_distributed_results
-```
-
-## `evaluate_vtheta_in_expression`
-```@docs
-MacroEnergy.evaluate_vtheta_in_expression
-```
-
 # Benders Utility Functions
+
+## `SubproblemsData`
+```@docs
+MacroEnergy.SubproblemsData
+```
+
+## `collect_data_from_subproblems`
+```@docs
+MacroEnergy.collect_data_from_subproblems
+```
+
+## `collect_distributed_data`
+```@docs
+MacroEnergy.collect_distributed_data
+```
+
+## `collect_local_data`
+```@docs
+MacroEnergy.collect_local_data
+```
+
+## `extract_subproblem_results`
+```@docs
+MacroEnergy.extract_subproblem_results
+```
 
 ## `populate_slack_vars_from_subproblems!`
 ```@docs

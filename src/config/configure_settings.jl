@@ -3,7 +3,8 @@ function default_settings()
         ConstraintScaling = false,
         EnableJuMPDirectModel = false,
         EnableJuMPStringNames = false,
-        WriteSubcommodities = false,
+        AllowImplicitTopLevelCommodities = true,
+        WriteSubcommodities = true,
         OverwriteResults = false,
         OutputDir = "results",
         OutputLayout = "long",
@@ -55,13 +56,14 @@ end
 
 function validate_settings(settings::NamedTuple)
     @assert settings[:ConstraintScaling] ∈ (false, true)
+    @assert settings[:AllowImplicitTopLevelCommodities] isa Bool
     @assert settings[:DualExportsEnabled] isa Bool
     @assert settings[:OutputLayout] isa Union{String, NamedTuple}
     if settings[:OutputLayout] isa String
         @assert settings[:OutputLayout] ∈ ("long", "wide")
     else
         # Note: we currently support these output files
-        @assert all(keys(settings[:OutputLayout]) .∈ Ref((:Capacity, :Costs, :Flow, :NonServedDemand, :StorageLevel)))
+        @assert all(keys(settings[:OutputLayout]) .∈ Ref((:Capacity, :Costs, :Curtailment, :Flow, :NonServedDemand, :StorageLevel)))
         @assert all(values(settings[:OutputLayout]) .∈ Ref(("long", "wide")))
     end
     return nothing
